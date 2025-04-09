@@ -1,4 +1,4 @@
-#include "EpollSocketServer.hpp"
+#include "../headers/EpollSocketServer.hpp"
 
 EpollSocketServer::EpollSocketServer(Config &new_config, Log &new_log) : serverFd(-1), epollFd(-1), connectionsNumber(0), events(NULL) , config(new_config) , log(new_log)
 {

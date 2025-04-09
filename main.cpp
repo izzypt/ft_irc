@@ -1,8 +1,8 @@
 #include <iostream>
 #include <sstream>
-#include "Config.hpp"
-#include "Log.hpp"
-#include "EpollSocketServer.hpp"
+#include "headers/Config.hpp"
+#include "headers/Log.hpp"
+#include "headers/EpollSocketServer.hpp"
 
 int convertToInt(std::string nbr_str)
 {
