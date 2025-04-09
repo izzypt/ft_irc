@@ -90,6 +90,7 @@ void EpollSocketServer::listenForConnections()
     setNonBlocking(serverFd);
     listen(serverFd, 5);
 
+    /*Creates an epoll instance and returns a file descriptor (`epollFd`) that represents it.*/
     epollFd = epoll_create1(0);
     if (epollFd == -1)
     {
@@ -101,6 +102,7 @@ void EpollSocketServer::listenForConnections()
     ev.events = EPOLLIN;
     ev.data.fd = serverFd;
 
+    /*Used to add, modify, or remove file descriptors from the `epoll` instance*/
     if (epoll_ctl(epollFd, EPOLL_CTL_ADD, serverFd, &ev) == -1)
     {
         log.entry("error", "Unable to add listen socket fd to epoll");
@@ -112,6 +114,7 @@ void EpollSocketServer::listenForConnections()
 
     while (true)
     {
+        /*Waits for events on the file descriptors registered with the `epoll` instance.*/
         int nfds = epoll_wait(epollFd, events, config.getMaxConnections() + 1, -1);
         if (nfds == -1)
         {
@@ -152,7 +155,6 @@ void EpollSocketServer::listenForConnections()
                     log.entry("error", "Unable to add client socket fd to epoll");
                     return;
                 }
-
                 connectionsNumber++;
             }
             else if (events[n].events & (EPOLLRDHUP | EPOLLHUP))

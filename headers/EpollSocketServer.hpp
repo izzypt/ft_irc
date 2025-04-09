@@ -12,6 +12,8 @@
 #include <string>
 #include "Config.hpp"
 #include "Log.hpp"
+#include <map>
+#include "Client.hpp"
 
 #define BUFFER_SIZE 500
 
@@ -35,6 +37,7 @@ class EpollSocketServer
     	struct epoll_event *events;
 		Config &config;
 		Log &log;
+		std::map<int, Client *> clients;
 
     	int openSocket();
     	void listenForConnections();
@@ -42,6 +45,7 @@ class EpollSocketServer
     	int processRequest(int socketFd);
     	int appendStringInBuffer(char *buffer, std::string& fullRequest);
     	void logErrorAndExit(const char *msg);
+		void StoreClient(int clientFd, struct sockaddr_in clientAddr);
 };
 
 #endif
