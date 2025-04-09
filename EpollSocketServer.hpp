@@ -1,6 +1,7 @@
 #ifndef EPOLL_SOCKET_SERVER_HPP
 #define EPOLL_SOCKET_SERVER_HPP
 
+#include <iostream>
 #include <sys/epoll.h>
 #include <netinet/in.h>
 #include <fcntl.h>

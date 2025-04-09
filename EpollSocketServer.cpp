@@ -108,6 +108,7 @@ void EpollSocketServer::listenForConnections()
     }
 
     log.entry("info", "Service ready to accept connections");
+    std::cout << "Service ready to accept connections" << std::endl;
 
     while (true)
     {
@@ -135,10 +136,12 @@ void EpollSocketServer::listenForConnections()
                 {
                     close(clientFd);
                     log.entry("warning", "Unable to accept more connections");
+                    std::cout << "Unable to accept more connections" << std::endl;
                     continue;
                 }
 
                 log.entry("info", "New connection opened");
+                std::cout << "New connection opened" << std::endl;
 
                 setNonBlocking(clientFd);
                 ev.events = EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP;

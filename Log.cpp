@@ -6,7 +6,10 @@
 #include <ctime>
 #include <sstream>
 
-Log::Log(const std::string& logFolder) : logFolder(logFolder) {}
+Log::Log(const std::string& new_logFolder) : logFolder(new_logFolder)
+{
+    std::cout << "Log folder: " << logFolder << std::endl;
+}
 
 Log::~Log() {}
 
@@ -26,7 +29,7 @@ void Log::entry(const std::string& type, const std::string& message)
     std::ofstream file;
     std::string path = logFolder + "/" + type + ".log";
 
-	file.open(path.c_str(), std::ios::in);
+	file.open(path.c_str(), std::ios::app);
     std::string timeString;
     formatTime('p', timeString);
 

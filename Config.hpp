@@ -7,6 +7,7 @@ class Config
 {
     private:
         std::string logFolder;
+        std::string Password;
         int listenPort;
         unsigned long int maxConnections;
 
@@ -21,6 +22,9 @@ class Config
 
         std::string getLogFolder() const;
         void setLogFolder(const std::string& logFolder);
+
+        std::string getPassword() const;
+        void setPassword(const std::string& Password);
 
         int getListenPort() const;
         void setListenPort(int listenPort);

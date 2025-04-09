@@ -15,7 +15,7 @@ class Log
     	int countFileLines(const std::string& path);
 
 public:
-    Log(const std::string& logFolder);
+    Log(const std::string& new_logFolder);
     Log(const Log& other);
     Log& operator=(const Log& other);
 	~Log();

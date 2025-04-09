@@ -6,7 +6,7 @@
 
 Config::Config() : listenPort(0), maxConnections(0)
 {
-    readConfigFile("irc.config");
+    readConfigFile("irc.conf");
 }
 
 Config::Config(const std::string& pathToFile) : listenPort(0), maxConnections(0)
@@ -14,13 +14,14 @@ Config::Config(const std::string& pathToFile) : listenPort(0), maxConnections(0)
     readConfigFile(pathToFile);
 }
 
-Config::Config(const Config& other) : logFolder(other.logFolder), listenPort(other.listenPort), maxConnections(other.maxConnections) {}
+Config::Config(const Config& other) : logFolder(other.logFolder), Password(other.Password), listenPort(other.listenPort), maxConnections(other.maxConnections) {}
 
 Config& Config::operator=(const Config& other)
 {
     if (this != &other) {
         logFolder = other.logFolder;
         listenPort = other.listenPort;
+        Password = other.Password;
         maxConnections = other.maxConnections;
     }
     return *this;
@@ -33,7 +34,8 @@ void Config::readConfigFile(const std::string& pathToFile)
     std::ifstream file(pathToFile.c_str());
     if (!file.is_open())
 	{
-        throw std::runtime_error("Unable to open configuration file.");
+        std::cout << "Unable to open config file: " << pathToFile << std::endl;
+        return;
     }
 
     std::string line;
@@ -46,15 +48,15 @@ void Config::readConfigFile(const std::string& pathToFile)
             std::string value;
             if (std::getline(iss, value))
 			{
-                if (key == "log_folder")
+                if (key == "LogFolder")
 				{
                     logFolder = value;
                 }
-				else if (key == "listen_port")
+				else if (key == "ListenPort")
 				{
                     std::istringstream(value) >> listenPort;
                 }
-				else if (key == "max_connections")
+				else if (key == "MaxConnections")
 				{
                     std::istringstream(value) >> maxConnections;
                 }
@@ -70,6 +72,11 @@ std::string Config::getLogFolder() const
     return logFolder;
 }
 
+std::string Config::getPassword() const
+{
+    return Password;
+}
+
 int Config::getListenPort() const
 {
     return listenPort;
@@ -83,6 +90,11 @@ unsigned long int Config::getMaxConnections() const
 void Config::setLogFolder(const std::string& logFolder)
 {
     this->logFolder = logFolder;
+}
+
+void Config::setPassword(const std::string& Password)
+{
+    this->Password = Password;
 }
 
 void Config::setListenPort(int listenPort)
