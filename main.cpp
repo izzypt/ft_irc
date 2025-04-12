@@ -3,6 +3,7 @@
 #include "headers/Config.hpp"
 #include "headers/Log.hpp"
 #include "headers/EpollSocketServer.hpp"
+#include "headers/SigHandler.hpp"
 
 int convertToInt(std::string nbr_str)
 {
@@ -17,6 +18,7 @@ int main(int argc, char **argv)
     Log log(config.getLogFolder());
     EpollSocketServer server(config, log);
     Controller controller(config, log);
+    //SigHandler sigHandler;
 
     if (argc != 3)
     {
@@ -25,6 +27,8 @@ int main(int argc, char **argv)
     }
 
     config.setListenPort(convertToInt(argv[1]));
+
+    SigHandler::setup(&server);
 
     config.setPassword(argv[2]);
 
