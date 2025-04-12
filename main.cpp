@@ -16,6 +16,7 @@ int main(int argc, char **argv)
     Config config;
     Log log(config.getLogFolder());
     EpollSocketServer server(config, log);
+    Controller controller(config, log);
 
     if (argc != 3)
     {
@@ -26,6 +27,10 @@ int main(int argc, char **argv)
     config.setListenPort(convertToInt(argv[1]));
 
     config.setPassword(argv[2]);
+
+    server.setController(&controller);
+
+    controller.setEpollSocketServer(&server);
 
     server.startServer();
 

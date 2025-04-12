@@ -1,3 +1,6 @@
+#ifndef CLIENT_HPP
+#define CLIENT_HPP
+
 #include <iostream>
 #include <string>
 #include <vector>
@@ -33,4 +36,6 @@ class Client
         void setOp(bool isOperator);
 
         void sendMessage(std::string message);
-}
+};
+
+#endif
