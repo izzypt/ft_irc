@@ -1,38 +1,18 @@
 #include "../headers/EpollSocketServer.hpp"
 
-EpollSocketServer::EpollSocketServer(Config &new_config, Log &new_log) : serverFd(-1), epollFd(-1), connectionsNumber(0), events(NULL) , config(new_config) , log(new_log)
+EpollSocketServer::EpollSocketServer(Config &new_config, Log &new_log) : serverFd(-1), epollFd(-1), connectionsNumber(0), config(new_config) , log(new_log) , controller(NULL)
 {
     events = new struct epoll_event[config.getMaxConnections() + 1];
-}
-
-EpollSocketServer::EpollSocketServer(const EpollSocketServer& other) : serverFd(other.serverFd), epollFd(other.epollFd), connectionsNumber(other.connectionsNumber), config(other.config) , log(other.log)
-{
-    // Allocate and copy the events array
-    events = new struct epoll_event[config.getMaxConnections() + 1];
-    memcpy(events, other.events, sizeof(struct epoll_event) * (config.getMaxConnections() + 1));
-}
-
-EpollSocketServer& EpollSocketServer::operator=(const EpollSocketServer& other)
-{
-    if (this != &other)
-    {
-        serverFd = other.serverFd;
-        epollFd = other.epollFd;
-        connectionsNumber = other.connectionsNumber;
-		config = other.config;
-		log = other.log;
-
-        delete[] events;
-        events = new struct epoll_event[config.getMaxConnections() + 1];
-        memcpy(events, other.events, sizeof(struct epoll_event) * (config.getMaxConnections() + 1));
-    }
-
-    return *this;
 }
 
 EpollSocketServer::~EpollSocketServer()
 {
+    closeAllConnections();
+    if (serverFd != -1)
+        close(serverFd);
     delete[] events;
+    if (epollFd != -1)
+        close(epollFd);
 }
 
 void EpollSocketServer::setController(Controller *new_controller)
@@ -42,32 +22,41 @@ void EpollSocketServer::setController(Controller *new_controller)
 
 void EpollSocketServer::startServer()
 {
-    serverFd = openSocket();  // Open the server socket
+    serverFd = openSocket();
     if (serverFd == -1)
     {
-        logErrorAndExit("Failed to open server socket");
+        logErrorAndExit("Failed to open server socket.");
     }
-
-    listenForConnections();  // Listen for incoming connections
+    listenForConnections();
 }
 
 void EpollSocketServer::stopServer()
 {
+    closeAllConnections();
     if (serverFd != -1)
     {
-        close(serverFd);  // Close the server socket
+        close(serverFd);
         serverFd = -1;
     }
+    delete[] events;
+    if (epollFd != -1)
+    {
+        close(epollFd);
+        epollFd = -1;
+    }
+    exit(0);
 }
 
 std::vector<int> EpollSocketServer::sendMessage(std::vector<int> clientsFileDescriptors, std::string message)
 {
     std::vector<int> invalids;
     std::vector<int>::iterator it;
+    std::set<int>::iterator itc;
 
     for (it = clientsFileDescriptors.begin(); it != clientsFileDescriptors.end(); ++it)
     {
-        if (write(*it, message.c_str(), message.size()) < 0)
+        itc = connections.find(*it);
+        if (itc == connections.end() || write(*it, message.c_str(), message.size()) < 0)
             invalids.push_back(*it); 
     }
     return invalids;
@@ -158,24 +147,15 @@ void EpollSocketServer::listenForConnections()
                     continue;
                 }
 
-                log.entry("info", "New connection opened");
-
-                setNonBlocking(clientFd);
-                ev.events = EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP;
-                ev.data.fd = clientFd;
-
-                if (epoll_ctl(epollFd, EPOLL_CTL_ADD, clientFd, &ev) == -1)
-                {
-                    close(clientFd);
-                    log.entry("error", "Unable to add client socket fd to epoll");
+                if (addConnection(clientFd))
                     continue;
-                }
+
+                log.entry("info", "New connection opened");
                 connectionsNumber++;
             }
             else if (events[n].events & (EPOLLRDHUP | EPOLLHUP))
             {
-                epoll_ctl(epollFd, EPOLL_CTL_DEL, events[n].data.fd, NULL);
-                close(events[n].data.fd);
+                closeConnection(events[n].data.fd);
                 connectionsNumber--;
                 log.entry("info", "Connection closed");
             }
@@ -228,4 +208,50 @@ void EpollSocketServer::logErrorAndExit(const char *msg)
 {
     log.entry("error", msg);
     exit(1);
+}
+
+int EpollSocketServer::addConnection(int fd)
+{
+    std::set<int>::iterator it = connections.find(fd);
+    if (it != connections.end())
+    {
+        log.entry("error", "Something went wrong! There is already a connection with this file descriptor");
+        return 1;
+    }
+    setNonBlocking(fd);
+    struct epoll_event ev;
+    ev.events = EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP;
+    ev.data.fd = fd;
+    if (epoll_ctl(epollFd, EPOLL_CTL_ADD, fd, &ev) == -1)
+    {
+        close(fd);
+        log.entry("error", "Unable to add client socket fd to epoll");
+        return 1;
+    }
+    connections.insert(fd);
+    return 0;
+}
+
+void EpollSocketServer::closeConnection(int fd)
+{
+    std::set<int>::iterator it = connections.find(fd);
+    if (it == connections.end())
+    {
+        log.entry("warning", "There is no connection with this file descriptor");
+        return;
+    }
+    epoll_ctl(epollFd, EPOLL_CTL_DEL, fd, NULL);
+    close(fd);
+    connections.erase(it);
+}
+
+void EpollSocketServer::closeAllConnections()
+{
+    std::set<int>::iterator it = connections.begin();
+    while (it != connections.end())
+    {
+        close(*it);
+        connections.erase(it);
+        ++it;
+    }
 }

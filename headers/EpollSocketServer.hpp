@@ -11,6 +11,7 @@
 #include <cstdio>
 #include <string>
 #include <vector>
+#include <set>
 #include "Config.hpp"
 #include "Log.hpp"
 #include "Controller.hpp"
@@ -23,8 +24,6 @@ class EpollSocketServer
 {
 	public:
     	EpollSocketServer(Config &new_config, Log &new_log);
-    	EpollSocketServer(const EpollSocketServer& other);
-    	EpollSocketServer& operator=(const EpollSocketServer& other);
 		~EpollSocketServer();
 
 		void setController(Controller *new_controller);
@@ -36,7 +35,8 @@ class EpollSocketServer
     	int epollFd;
     	struct sockaddr_in serverAddr;
     	unsigned long int connectionsNumber;
-    	struct epoll_event *events;
+		struct epoll_event *events;
+		std::set<int> connections;
 		Config &config;
 		Log &log;
 		Controller *controller;
@@ -48,6 +48,13 @@ class EpollSocketServer
     	int appendStringInBuffer(char *buffer, std::string& fullRequest);
     	void logErrorAndExit(const char *msg);
 		void StoreClient(int clientFd, struct sockaddr_in clientAddr);
+		int addConnection(int fd);
+		void closeConnection(int fd);
+		void closeAllConnections();
+
+		EpollSocketServer();
+		EpollSocketServer(const EpollSocketServer& other);
+    	EpollSocketServer& operator=(const EpollSocketServer& other);
 };
 
 #endif
