@@ -18,3 +18,10 @@ void Controller::processMessage(int client_fd, std::string message)
     log.entry("info", message);
     invalids = epollServer->sendMessage(sendTo, message);
 }
+
+void Controller::connectionClosed(int client_fd)
+{
+    std::map<int, Client *>::iterator it = clients.find(client_fd);
+    if (it != clients.end())
+        it->second->setFd(-1);
+}

@@ -4,11 +4,15 @@
 #include <iostream>
 #include <sys/epoll.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <netdb.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <cstring>
 #include <cstdlib>
 #include <cstdio>
+#include <cerrno>
 #include <string>
 #include <vector>
 #include <set>
@@ -30,6 +34,7 @@ class EpollSocketServer
     	void startServer();
     	void stopServer();
 		std::vector<int> sendMessage(std::vector<int> clientsFileDescriptors, std::string message);
+		std::string getHostname(int fd);
 	private:
     	int serverFd;
     	int epollFd;
@@ -51,6 +56,7 @@ class EpollSocketServer
 		int addConnection(int fd);
 		void closeConnection(int fd);
 		void closeAllConnections();
+		std::string getHostnameFromIp(const std::string& ip);
 
 		EpollSocketServer();
 		EpollSocketServer(const EpollSocketServer& other);

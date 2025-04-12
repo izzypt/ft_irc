@@ -62,6 +62,22 @@ std::vector<int> EpollSocketServer::sendMessage(std::vector<int> clientsFileDesc
     return invalids;
 }
 
+std::string EpollSocketServer::getHostname(int fd)
+{
+    struct sockaddr_in addr;
+    socklen_t addr_len = sizeof(addr);
+
+    if (getsockname(fd, (struct sockaddr*)&addr, &addr_len) == -1)
+    {
+        std::string errorMessage = std::string("Error getting socket name: ") + strerror(errno);
+        log.entry("error", errorMessage);
+        return "";
+    }
+    std::string ip = inet_ntoa(addr.sin_addr);
+    
+    return getHostnameFromIp(ip);
+}
+
 int EpollSocketServer::openSocket()
 {
     if (config.getListenPort() < 1)
@@ -77,6 +93,10 @@ int EpollSocketServer::openSocket()
         return -1;
     }
 
+    int opt = 1;
+    if (setsockopt(serverFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
+        log.entry("error", "Unable to set socket to allow the reuse of local addresses.");
+
     memset(&serverAddr, 0, sizeof(serverAddr));
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_addr.s_addr = INADDR_ANY;
@@ -87,12 +107,13 @@ int EpollSocketServer::openSocket()
         log.entry("error", "Binding not possible");
         return -1;
     }
-
     return serverFd;
 }
 
 void EpollSocketServer::listenForConnections()
 {
+    std::string logMessage;
+
     setNonBlocking(serverFd);
     listen(serverFd, 5);
 
@@ -150,7 +171,8 @@ void EpollSocketServer::listenForConnections()
                 if (addConnection(clientFd))
                     continue;
 
-                log.entry("info", "New connection opened");
+                logMessage = "Opened new TCP connection from " + getHostname(clientFd);
+                log.entry("info", logMessage);
                 connectionsNumber++;
             }
             else if (events[n].events & (EPOLLRDHUP | EPOLLHUP))
@@ -242,6 +264,7 @@ void EpollSocketServer::closeConnection(int fd)
     }
     epoll_ctl(epollFd, EPOLL_CTL_DEL, fd, NULL);
     close(fd);
+    controller->connectionClosed(fd);
     connections.erase(it);
 }
 
@@ -251,7 +274,20 @@ void EpollSocketServer::closeAllConnections()
     while (it != connections.end())
     {
         close(*it);
+        controller->connectionClosed(*it);
         connections.erase(it);
         it = connections.begin();
     }
+}
+
+std::string EpollSocketServer::getHostnameFromIp(const std::string& ip)
+{
+    struct hostent *he = gethostbyname(ip.c_str());
+    if (he == NULL)
+    {
+        std::string errorMessage = std::string("Error resolving hostname: ") + hstrerror(h_errno);
+        log.entry("warning", errorMessage);
+        return ip;
+    }
+    return std::string(he->h_name);
 }

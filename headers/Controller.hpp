@@ -24,6 +24,7 @@ class Controller
         
         void setEpollSocketServer(EpollSocketServer *new_server);
         void processMessage(int client_fd, std::string message);
+        void connectionClosed(int client_fd);
     private:
         Config &config;
         Log &log;

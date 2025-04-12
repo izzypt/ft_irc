@@ -26,6 +26,8 @@ class Client
         bool isRegistered() const;
         bool isOp() const;
 
+        void setFd(int new_fd);
+        void setHostname(std::string new_hostname);
         void setNickname(std::string new_nickname);
         void setUsername(std::string new_username);
         void setRegistered(bool new_registered);
