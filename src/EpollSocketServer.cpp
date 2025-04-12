@@ -252,6 +252,6 @@ void EpollSocketServer::closeAllConnections()
     {
         close(*it);
         connections.erase(it);
-        ++it;
+        it = connections.begin();
     }
 }
