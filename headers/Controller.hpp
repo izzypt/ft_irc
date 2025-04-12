@@ -20,17 +20,19 @@ class Controller
 {
     public:
         Controller(Config &new_config, Log &new_log);
-        Controller(const Controller &other);
-        Controller& operator=(const Controller &other);
         ~Controller();
         
         void setEpollSocketServer(EpollSocketServer *new_server);
         void processMessage(int client_fd, std::string message);
+        void connectionClosed(int client_fd);
     private:
         Config &config;
         Log &log;
         EpollSocketServer* epollServer;
         std::map<int, Client *> clients;
+
+        Controller(const Controller &other);
+        Controller& operator=(const Controller &other);
 };
 
 #endif
