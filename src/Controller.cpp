@@ -1,18 +1,6 @@
 #include "../headers/Controller.hpp"
 
-Controller::Controller(Config &new_config, Log &new_log) : config(new_config) , log(new_log) {}
-
-Controller::Controller(const Controller &other) : config(other.config) , log(other.log) {}
-
-Controller& Controller::operator=(const Controller &other)
-{
-    if (this != &other)
-    {
-        config = other.config;
-        log = other.log;
-    }
-    return *this;
-}
+Controller::Controller(Config &new_config, Log &new_log) : config(new_config) , log(new_log) , epollServer(NULL) {}
 
 Controller::~Controller() {}
 

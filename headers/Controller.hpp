@@ -20,8 +20,6 @@ class Controller
 {
     public:
         Controller(Config &new_config, Log &new_log);
-        Controller(const Controller &other);
-        Controller& operator=(const Controller &other);
         ~Controller();
         
         void setEpollSocketServer(EpollSocketServer *new_server);
@@ -31,6 +29,9 @@ class Controller
         Log &log;
         EpollSocketServer* epollServer;
         std::map<int, Client *> clients;
+
+        Controller(const Controller &other);
+        Controller& operator=(const Controller &other);
 };
 
 #endif
