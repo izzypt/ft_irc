@@ -21,8 +21,6 @@ class Channel
         void removeClient(Client* client);
         bool hasClient(Client* client) const;
 
-        void broadcast(const std::string& message, Client* excludeClient = NULL);
-
     private:
         std::string name;
         std::string topic;

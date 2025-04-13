@@ -31,10 +31,11 @@ class Controller
         Log &log;
         EpollSocketServer* epollServer;
         std::map<int, Client *> clients;
-        std::map<std::string, int (Controller::*)(int, std::string)> parseHandlersMap;
+        std::map<std::string, Client *> clients_by_nick;
+        std::map<std::string, int (Controller::*)(int, std::istringstream&)> parseHandlersMap;
 
-        int parseHandler(int fd, const std::string& CMD, std::string value);
-        int authHandler(int fd, std::string password);
+        int parseHandler(int fd, const std::string& CMD, std::istringstream &msgStream);
+        int authHandler(int fd, std::istringstream &msgStream);
         void initParseHandlers();
 
         Controller(const Controller &other);

@@ -38,11 +38,3 @@ bool Channel::hasClient(Client* client) const {
     }
     return false;
 }
-
-void Channel::broadcast(const std::string& message, Client* excludeClient) {
-    for (std::vector<Client*>::iterator it = clients.begin(); it != clients.end(); ++it) {
-        if (*it != excludeClient) {
-            (*it)->sendMessage(message);
-        }
-    }
-}
