@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include <sstream>
 #include <map>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -30,6 +31,11 @@ class Controller
         Log &log;
         EpollSocketServer* epollServer;
         std::map<int, Client *> clients;
+        std::map<std::string, int (Controller::*)(int, std::string)> parseHandlersMap;
+
+        int parseHandler(int fd, const std::string& CMD, std::string value);
+        int authHandler(int fd, std::string password);
+        void initParseHandlers();
 
         Controller(const Controller &other);
         Controller& operator=(const Controller &other);
