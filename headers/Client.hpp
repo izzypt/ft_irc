@@ -6,17 +6,6 @@
 
 class Client
 {
-    private:
-        int fd;
-        std::string hostname;
-        std::string nickname;
-        std::string username;
-        std::string realname;
-        bool registered;
-        bool isOperator;
-
-        Client(const Client&);
-        Client& operator=(const Client&);
     public:
         Client(int new_fd, std::string new_nickname);
         ~Client();
@@ -35,6 +24,17 @@ class Client
         void setRealname(std::string new_realname);
         void setRegistered(bool new_registered);
         void setOp(bool new_isOperator);
+    private:
+        int fd;
+        std::string hostname;
+        std::string nickname;
+        std::string username;
+        std::string realname;
+        bool registered;
+        bool isOperator;
+
+        Client(const Client&);
+        Client& operator=(const Client&);
 };
 
 #endif

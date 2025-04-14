@@ -35,6 +35,8 @@ class EpollSocketServer
     	void stopServer();
 		std::vector<int> sendMessage(std::vector<int> clientsFileDescriptors, std::string message);
 		std::string getHostname(int fd);
+		std::string getServerHostname();
+		void closeConnection(int fd);
 	private:
     	int serverFd;
     	int epollFd;
@@ -54,9 +56,10 @@ class EpollSocketServer
     	void logErrorAndExit(const char *msg);
 		void StoreClient(int clientFd, struct sockaddr_in clientAddr);
 		int addConnection(int fd);
-		void closeConnection(int fd);
 		void closeAllConnections();
 		std::string getHostnameFromIp(const std::string& ip);
+
+		void clearContainers();
 
 		EpollSocketServer();
 		EpollSocketServer(const EpollSocketServer& other);

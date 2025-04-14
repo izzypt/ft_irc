@@ -1,6 +1,6 @@
 #include "../headers/Client.hpp"
 
-Client::Client(int new_fd, std::string new_nickname) : fd(new_fd) , nickname(new_nickname) {}
+Client::Client(int new_fd, std::string new_nickname) : fd(new_fd) , nickname(new_nickname) , registered(false) , isOperator(false) {}
 
 Client::~Client() {}
 

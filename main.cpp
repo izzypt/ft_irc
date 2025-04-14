@@ -28,7 +28,7 @@ int main(int argc, char **argv)
 
     config.setListenPort(convertToInt(argv[1]));
 
-    SigHandler::setup(&server);
+    SigHandler::setup(&server, &controller);
 
     config.setPassword(argv[2]);
 

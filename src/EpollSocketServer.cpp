@@ -13,6 +13,7 @@ EpollSocketServer::~EpollSocketServer()
     delete[] events;
     if (epollFd != -1)
         close(epollFd);
+    clearContainers();
 }
 
 void EpollSocketServer::setController(Controller *new_controller)
@@ -44,7 +45,7 @@ void EpollSocketServer::stopServer()
         close(epollFd);
         epollFd = -1;
     }
-    exit(0);
+    clearContainers();
 }
 
 std::vector<int> EpollSocketServer::sendMessage(std::vector<int> clientsFileDescriptors, std::string message)
@@ -76,6 +77,11 @@ std::string EpollSocketServer::getHostname(int fd)
     std::string ip = inet_ntoa(addr.sin_addr);
     
     return getHostnameFromIp(ip);
+}
+
+std::string EpollSocketServer::getServerHostname()
+{
+    return getHostname(serverFd);
 }
 
 int EpollSocketServer::openSocket()
@@ -112,8 +118,6 @@ int EpollSocketServer::openSocket()
 
 void EpollSocketServer::listenForConnections()
 {
-    std::string logMessage;
-
     setNonBlocking(serverFd);
     listen(serverFd, 5);
 
@@ -171,7 +175,7 @@ void EpollSocketServer::listenForConnections()
                 if (addConnection(clientFd))
                     continue;
 
-                logMessage = "Opened new TCP connection from " + getHostname(clientFd);
+                std::string logMessage = "Opened new TCP connection from " + getHostname(clientFd);
                 log.entry("info", logMessage);
                 connectionsNumber++;
             }
@@ -290,4 +294,9 @@ std::string EpollSocketServer::getHostnameFromIp(const std::string& ip)
         return ip;
     }
     return std::string(he->h_name);
+}
+
+void EpollSocketServer::clearContainers()
+{
+    connections.clear();
 }

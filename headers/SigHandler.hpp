@@ -4,14 +4,16 @@
 #include <csignal>
 #include <iostream>
 #include "EpollSocketServer.hpp"
+#include "Controller.hpp"
 
 class SigHandler {
 public:
-    static void setup(EpollSocketServer *server);
+    static void setup(EpollSocketServer *server, Controller *controller);
 
     static bool wasInterrupted();
     static void reset();
     static EpollSocketServer* _server;
+    static Controller* _controller;
 
 
 private:

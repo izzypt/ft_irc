@@ -2,8 +2,7 @@
 #define CHANNEL_HPP
 
 #include <string>
-#include <vector>
-#include <map>
+#include <set>
 
 class Client;
 
@@ -17,14 +16,13 @@ class Channel
         const std::string& getTopic() const;
         void setTopic(const std::string& newTopic);
 
-        void addClient(Client* client);
-        void removeClient(Client* client);
-        bool hasClient(Client* client) const;
+        void addClient(int fd);
+        void removeClient(int fd);
 
     private:
         std::string name;
         std::string topic;
-        std::vector<Client*> clients;
+        std::set<int> clients;
 
         Channel(const Channel& other);
         Channel& operator=(const Channel& other);
