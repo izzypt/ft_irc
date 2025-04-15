@@ -13,6 +13,7 @@
 #include "Config.hpp"
 #include "Log.hpp"
 #include "Client.hpp"
+#include "Channel.hpp"
 #include "EpollSocketServer.hpp"
 
 class EpollSocketServer;
@@ -32,12 +33,13 @@ class Controller
         Log &log;
         EpollSocketServer* epollServer;
         std::map<int, Client *> clients;
-        std::map<std::string, Client *> clients_by_nick;
-        std::map<std:::string, Channel *> channels;
+        std::set<std::string> existentNicks;
+        std::map<std::string, Channel *> channels;
         std::map<std::string, int (Controller::*)(int, std::string)> parseHandlersMap;
         std::map<int, std::string> fdBuffers;
 
-        void sendResponse(std::vector<int> sendTo, std::string response);
+        std::set<int> broadcastTo(int client_fd);
+        void sendResponse(std::set<int> sendTo, std::string response);
 
         int parseHandler(int fd, const std::string& CMD, std::string content);
         int authHandler(int fd, std::string password);

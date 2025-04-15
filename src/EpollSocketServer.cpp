@@ -48,17 +48,17 @@ void EpollSocketServer::stopServer()
     clearContainers();
 }
 
-std::vector<int> EpollSocketServer::sendMessage(std::vector<int> clientsFileDescriptors, std::string message)
+std::set<int> EpollSocketServer::sendMessage(std::set<int> clientsFileDescriptors, std::string message)
 {
-    std::vector<int> invalids;
-    std::vector<int>::iterator it;
+    std::set<int> invalids;
+    std::set<int>::iterator it;
     std::set<int>::iterator itc;
 
     for (it = clientsFileDescriptors.begin(); it != clientsFileDescriptors.end(); ++it)
     {
         itc = connections.find(*it);
         if (itc == connections.end() || write(*it, message.c_str(), message.size()) < 0)
-            invalids.push_back(*it); 
+            invalids.insert(*it); 
     }
     return invalids;
 }

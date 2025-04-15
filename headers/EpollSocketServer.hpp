@@ -33,7 +33,7 @@ class EpollSocketServer
 		void setController(Controller *new_controller);
     	void startServer();
     	void stopServer();
-		std::vector<int> sendMessage(std::vector<int> clientsFileDescriptors, std::string message);
+		std::set<int> sendMessage(std::set<int> clientsFileDescriptors, std::string message);
 		std::string getHostname(int fd);
 		std::string getServerHostname();
 		void closeConnection(int fd);

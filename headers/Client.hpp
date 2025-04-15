@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include <set>
 
 class Client
 {
@@ -24,6 +25,10 @@ class Client
         void setRealname(std::string new_realname);
         void setRegistered(bool new_registered);
         void setOp(bool new_isOperator);
+        void addChannel(std::string name);
+        void removeChannel(std::string name);
+        std::set<std::string> getClientChannels();
+        void clearData();
     private:
         int fd;
         std::string hostname;
@@ -32,6 +37,7 @@ class Client
         std::string realname;
         bool registered;
         bool isOperator;
+        std::set<std::string> channels;
 
         Client(const Client&);
         Client& operator=(const Client&);

@@ -49,16 +49,43 @@ void Controller::connectionClosed(int client_fd)
     std::map<int, Client *>::iterator it = clients.find(client_fd);
     if (it != clients.end())
     {
-        it->second->setFd(-1);
+        std::set<std::string> clientChannels = it->second->getClientChannels();
+        std::set<std::string>::iterator itc;
+        for (itc = clientChannels.begin(); itc != clientChannels.end(); ++itc)
+            channels[*itc]->removeClient(client_fd);
+        existentNicks.erase(it->second->getNickname());
+        it->second->clearData();
+        delete it->second;
         clients.erase(it);
     }
-    std::cout << "Connection closed by client" << std::endl;
 }
 
-void Controller::sendResponse(std::vector<int> sendTo, std::string response)
+std::set<int> Controller::broadcastTo(int client_fd)
 {
-    std::vector<int> invalids;
-    std::vector<int>::iterator it;
+    std::map<int, Client *>::iterator it = clients.find(client_fd);
+    std::set<int> sendTo;
+
+    if (it == clients.end())
+    {
+        return sendTo;
+    }
+    std::set<std::string> clientChannels = it->second->getClientChannels();
+    std::set<std::string>::iterator itc;
+    for (itc = clientChannels.begin(); itc != clientChannels.end(); ++itc)
+    {
+        std::set<int> users = channels[*itc]->getChannelClients();
+        for (std::set<int>::iterator itu = users.begin(); itu != users.end(); ++itu)
+            sendTo.insert(*itu);
+    }
+    sendTo.erase(client_fd);
+
+    return sendTo;
+}
+
+void Controller::sendResponse(std::set<int> sendTo, std::string response)
+{
+    std::set<int> invalids;
+    std::set<int>::iterator it;
 
     response += "\r\n"; 
 
@@ -87,9 +114,9 @@ int Controller::authHandler(int fd, std::string password)
     std::cout << "password " << password << std::endl;
     if (password != config.getPassword())
     {
-        std::vector<int> sendTo;
+        std::set<int> sendTo;
 
-        sendTo.push_back(fd);
+        sendTo.insert(fd);
         sendResponse(sendTo, ":localhost 464 * :Password incorrect");
         return 1;
     }
@@ -98,51 +125,44 @@ int Controller::authHandler(int fd, std::string password)
 
 int Controller::nickHandler(int fd, std::string nickname)
 {
-    std::map<std::string, Client *>::iterator it = clients_by_nick.find(nickname);
+    std::map<int, Client *>::iterator it = clients.find(fd);
     std::string response;
+    std::pair<std::set<std::string>::iterator, bool> result = existentNicks.insert(nickname);
 
-    if (it != clients_by_nick.end())
+    if (it != clients.end())
     {
-        if (it->second->getFd() == -1)
+        if (result.second == true)
         {
-            it->second->setFd(fd);
-            return 0;
-        }
-        else if (it->second->getFd() != fd)
-        {
-            std::vector<int> sendTo;
+            std::string oldNick = it->second->getNickname();
+            it->second->setNickname(nickname);
 
-            sendTo.push_back(fd);
+            existentNicks.erase(oldNick);     
+    
+            std::set<int> sendTo = broadcastTo(fd);
+            response = ":" + oldNick + "!" + it->second->getUsername() + "@" + it->second->getHostname() + " NICK :" + nickname;
+            sendResponse(sendTo, response);
+        }
+        else
+        {
+            std::set<int> sendTo;
+
+            sendTo.insert(fd);
             response = ":" + epollServer->getServerHostname() + " 433 * " + nickname + " :Nickname is already in use";
             sendResponse(sendTo, response);
-            return 0;
         }
-    }
-    std::map<int, Client *>::iterator itf = clients.find(fd);
-    if (itf != clients.end())
-    {
-        std::string oldNick = itf->second->getNickname();
-        itf->second->setNickname(nickname);
-
-        it = clients_by_nick.find(oldNick);
-        if (it != clients_by_nick.end())
-            clients_by_nick.erase(it);
-        
-        clients_by_nick.insert(std::pair<std::string, Client *>(nickname, itf->second));
-
-        std::vector<int> sendTo;
-        //TODO get file descriptors of all users of user channels
-        sendTo.push_back(fd);
-        response = ":" + oldNick + "!" + itf->second->getUsername() + "@" + itf->second->getHostname() + " NICK :" + nickname;
-        sendResponse(sendTo, response);
         return 0;
     }
-    else
+    if (result.second == false)
     {
-        Client *newClient = new Client(fd, nickname);
-        clients.insert(std::pair<int, Client *>(fd, newClient));
-        clients_by_nick.insert(std::pair<std::string, Client *>(nickname, newClient));
+        std::set<int> sendTo;
+
+        sendTo.insert(fd);
+        response = ":" + epollServer->getServerHostname() + " 433 * " + nickname + " :Nickname is already in use";
+        sendResponse(sendTo, response);
+        return 1;
     }
+    Client *newClient = new Client(fd, nickname);
+    clients.insert(std::pair<int, Client *>(fd, newClient));
     return 0;
 }
 
@@ -150,23 +170,18 @@ int Controller::userHandler(int fd, std::string userData)
 {
     std::map<int, Client *>::iterator it = clients.find(fd);
     std::string response;
-    std::vector<int> sendTo;
+    std::set<int> sendTo;
     std::string username;
     std::string realname;
     std::istringstream userStream(userData);
 
-    sendTo.push_back(fd);
+    sendTo.insert(fd);
 
-    if (it == clients.end() || (it->second->isRegistered() && username != it->second->getUsername()))
+    if (it == clients.end())
+        return 0;
+    if (it->second->isRegistered())
     {
-        if (it != clients.end())
-        {
-            response = ":" + epollServer->getServerHostname() + " 462 * " + it->second->getNickname() + " :You may not reregister";
-        }
-        else
-        {
-            response = ":" + epollServer->getServerHostname() + " 462 * :You may not reregister";
-        }
+        response = ":" + epollServer->getServerHostname() + " 462 * " + it->second->getNickname() + " :You may not reregister";
         sendResponse(sendTo, response);
         return 0;
     }
@@ -187,14 +202,17 @@ int Controller::userHandler(int fd, std::string userData)
 int Controller::quitHandler(int fd, std::string quitMessage)
 {
     std::map<int, Client *>::iterator it = clients.find(fd);
+    std::string response;
+    std::set<int> sendTo;
 
     std::cout << quitMessage << std::endl;
 
-    if (it != clients.end())
-    {
-        std::cout << "Closed by server" << std::endl;
-        epollServer->closeConnection(fd);
-    }
+    if (it == clients.end())
+        return 0;
+    sendTo = broadcastTo(fd);
+    response = ":" +  it->second->getNickname() + "!" + it->second->getUsername() + "@" + it->second->getHostname() + " QUIT " + quitMessage;
+    epollServer->closeConnection(fd);
+    sendResponse(sendTo, response);
     return 0;
 }
 
@@ -241,10 +259,11 @@ std::string Controller::escapeVisible(const std::string& input)
 
 void Controller::removeClients()
 {
-    std::map<std::string, Client *>::iterator it;
+    std::map<int, Client *>::iterator it;
 
-    for (it = clients_by_nick.begin(); it != clients_by_nick.end(); ++it)
+    for (it = clients.begin(); it != clients.end(); ++it)
     {
+        it->second->clearData();
         delete it->second;
     }
 }
@@ -253,15 +272,16 @@ void Controller::removeChannels()
 {
     std::map<std::string, Channel *>::iterator it;
 
-    for (it = channels.begin(); it != clients_by_nick.end(); ++it)
+    for (it = channels.begin(); it != channels.end(); ++it)
     {
+        it->second->clearData();
         delete it->second;
     }
 }
 
 void Controller::clearContainers()
 {
-    clients_by_nick.clear();
+    existentNicks.clear();
     clients.clear();
     channels.clear();
     parseHandlersMap.clear();

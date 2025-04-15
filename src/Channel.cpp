@@ -1,5 +1,4 @@
-#include "Channel.hpp"
-#include "Client.hpp"
+#include "../headers/Channel.hpp"
 
 Channel::Channel(const std::string& name) : name(name), topic("") {}
 
@@ -22,18 +21,20 @@ void Channel::setTopic(const std::string& newTopic)
 
 void Channel::addClient(int fd)
 {
-    std::set<int>::iterator it = clients.find(fd);
-    
+    clients.insert(fd);
 }
 
 void Channel::removeClient(int fd)
 {
-    for (std::vector<Client*>::iterator it = clients.begin(); it != clients.end(); ++it)
-    {
-        if (*it == client)
-        {
-            clients.erase(it);
-            break;
-        }
-    }
+    clients.erase(fd);
+}
+
+std::set<int> Channel::getChannelClients()
+{
+    return clients;
+}
+
+void Channel::clearData()
+{
+    clients.clear();
 }

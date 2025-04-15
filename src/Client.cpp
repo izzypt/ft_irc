@@ -73,3 +73,23 @@ void Client::setOp(bool new_isOperator)
 {
     isOperator = new_isOperator;
 }
+
+void Client::addChannel(std::string name)
+{
+    channels.insert(name);
+}
+
+void Client::removeChannel(std::string name)
+{
+    channels.erase(name);
+}
+
+std::set<std::string> Client::getClientChannels()
+{
+    return channels;
+}
+
+void Client::clearData()
+{
+    channels.clear();
+}

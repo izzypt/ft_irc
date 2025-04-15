@@ -18,6 +18,8 @@ class Channel
 
         void addClient(int fd);
         void removeClient(int fd);
+        std::set<int> getChannelClients();
+        void clearData();
 
     private:
         std::string name;
